@@ -1,0 +1,19 @@
+{
+  "name": "pwrflow-notate",
+  "version": "1.0.0",
+  "description": "Chrome extension for annotating Power Automate flows",
+  "scripts": {
+    "build": "echo 'No build step required - pure JavaScript implementation'",
+    "test": "echo 'Tests not yet implemented'"
+  },
+  "keywords": [
+    "power-automate",
+    "chrome-extension",
+    "annotations",
+    "workflow",
+    "documentation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {}
+}

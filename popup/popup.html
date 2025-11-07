@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWRFlow Notate</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 400px;
+      min-height: 300px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+    }
+
+    .container {
+      padding: 0;
+    }
+
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 24px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .content {
+      padding: 20px;
+      background: white;
+    }
+
+    .feature {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: rgba(102, 126, 234, 0.05);
+      border-radius: 8px;
+      border-left: 3px solid #667eea;
+    }
+
+    .feature-icon {
+      font-size: 24px;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .feature-content h3 {
+      font-size: 14px;
+      margin-bottom: 4px;
+      color: #333;
+    }
+
+    .feature-content p {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .actions {
+      padding: 20px;
+      background: #f8f9fa;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #667eea;
+      border: 2px solid #667eea;
+    }
+
+    .btn-secondary:hover {
+      background: #667eea;
+      color: white;
+    }
+
+    .footer {
+      padding: 16px;
+      text-align: center;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .footer a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    .status {
+      padding: 8px 12px;
+      background: rgba(68, 255, 68, 0.2);
+      border-radius: 6px;
+      text-align: center;
+      font-size: 12px;
+      color: #2d5016;
+      margin-top: 12px;
+      font-weight: 600;
+    }
+
+    .status.inactive {
+      background: rgba(255, 68, 68, 0.2);
+      color: #661616;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📝 PWRFlow Notate</h1>
+      <p>Annotate your Power Automate flows</p>
+    </div>
+
+    <div class="content">
+      <div class="feature">
+        <div class="feature-icon">💬</div>
+        <div class="feature-content">
+          <h3>Inline Comments</h3>
+          <p>Add detailed notes to any flow action</p>
+        </div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">🎨</div>
+        <div class="feature-content">
+          <h3>Visual Markers</h3>
+          <p>Color-code critical sections</p>
+        </div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">🏷️</div>
+        <div class="feature-content">
+          <h3>Smart Tags</h3>
+          <p>Organize with custom labels</p>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value" id="annotation-count">0</div>
+          <div class="stat-label">Annotations</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="flow-count">0</div>
+          <div class="stat-label">Flows</div>
+        </div>
+      </div>
+
+      <div class="status" id="status">
+        Active on this page
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="export-btn">Export Annotations</button>
+      <button class="btn btn-secondary" id="clear-btn">Clear All</button>
+    </div>
+
+    <div class="footer">
+      <p>Made with 💜 for Power Automate users</p>
+      <p><a href="https://github.com" target="_blank">Documentation</a> • <a href="https://github.com" target="_blank">Report Issue</a></p>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
