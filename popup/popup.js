@@ -12,6 +12,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Event listeners
   document.getElementById('view-annotations-btn').addEventListener('click', viewAnnotations);
   document.getElementById('export-btn').addEventListener('click', exportAnnotations);
+  document.getElementById('import-btn').addEventListener('click', () => {
+    document.getElementById('import-file-input').click();
+  });
+  document.getElementById('import-file-input').addEventListener('change', importAnnotations);
   document.getElementById('clear-btn').addEventListener('click', clearAnnotations);
   document.getElementById('close-annotations-btn').addEventListener('click', closeAnnotationsModal);
 
@@ -231,6 +235,86 @@ function escapeHtml(unsafe) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+/**
+ * Import annotations from JSON file
+ */
+async function importAnnotations(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  try {
+    const fileContent = await file.text();
+    const importedData = JSON.parse(fileContent);
+
+    // Validate the imported data structure
+    if (typeof importedData !== 'object' || importedData === null) {
+      throw new Error('Invalid annotations file format');
+    }
+
+    // Ask user if they want to merge or replace
+    const merge = confirm(
+      'How would you like to import?\n\n' +
+      'OK = Merge with existing annotations\n' +
+      'Cancel = Replace all annotations (current annotations will be lost)'
+    );
+
+    let finalAnnotations = importedData;
+
+    if (merge) {
+      // Merge: combine existing with imported
+      const result = await chrome.storage.local.get(['annotations']);
+      const existingAnnotations = result.annotations || {};
+
+      // Merge annotations for each URL
+      finalAnnotations = { ...existingAnnotations };
+
+      Object.keys(importedData).forEach(url => {
+        if (finalAnnotations[url]) {
+          // Merge annotations for this URL
+          finalAnnotations[url] = {
+            ...finalAnnotations[url],
+            ...importedData[url]
+          };
+        } else {
+          // New URL, just add it
+          finalAnnotations[url] = importedData[url];
+        }
+      });
+    }
+
+    // Save the annotations
+    await chrome.storage.local.set({ annotations: finalAnnotations });
+
+    // Update stats
+    await loadStats();
+
+    // Show success message
+    const btn = document.getElementById('import-btn');
+    const originalText = btn.textContent;
+    btn.textContent = '✓ Imported!';
+    btn.style.background = '#44ff44';
+
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = '';
+    }, 2000);
+
+    // Reload current tab if on Power Automate
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab.url.includes('powerautomate.com') || tab.url.includes('flow.microsoft.com')) {
+      chrome.tabs.reload(tab.id);
+    }
+
+    // Clear the file input
+    event.target.value = '';
+
+  } catch (error) {
+    console.error('Error importing annotations:', error);
+    alert('Error importing annotations. Please check the file format and try again.\n\nError: ' + error.message);
+    event.target.value = '';
+  }
 }
 
 /**

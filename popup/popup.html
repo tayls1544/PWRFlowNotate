@@ -354,9 +354,13 @@
 
     <div class="actions">
       <button class="btn btn-primary" id="view-annotations-btn">📋 View Annotations</button>
-      <button class="btn btn-primary" id="export-btn">Export Annotations</button>
+      <button class="btn btn-primary" id="export-btn">💾 Export</button>
+      <button class="btn btn-primary" id="import-btn">📥 Import</button>
       <button class="btn btn-secondary" id="clear-btn">Clear All</button>
     </div>
+
+    <!-- Hidden file input for import -->
+    <input type="file" id="import-file-input" accept=".json" style="display: none;">
 
     <!-- Annotations List Modal -->
     <div class="annotations-list-modal" id="annotations-modal" style="display: none;">
