@@ -117,29 +117,92 @@ class PWRFlowNotate {
     if (this.isUpdating) return;
 
     try {
-      // Find all flow action cards/elements
+      // Find all flow action cards/elements - comprehensive selectors
       const selectors = [
+        // Standard Power Automate selectors
         '[data-automation-id*="action"]',
         '[data-automation-id*="trigger"]',
+        '[data-automation-id*="card"]',
+        // Class-based selectors
         '[class*="action-card"]',
         '[class*="trigger-card"]',
         '[class*="flowcard"]',
+        '[class*="actionCard"]',
+        '[class*="triggerCard"]',
+        '[class*="flow-card"]',
+        '[class*="Card"]',
+        // Container selectors
         '.card-container',
-        '[role="button"][class*="card"]'
+        '[class*="cardContainer"]',
+        '[class*="card-wrapper"]',
+        // Role-based
+        '[role="button"][class*="card"]',
+        '[role="group"][class*="card"]',
+        // Generic card detection
+        '[class*="card"][class*="root"]',
+        'div[class*="card"]:not(.pwrflow-modal)',
+        // Condition and control cards
+        '[data-automation-id*="condition"]',
+        '[data-automation-id*="scope"]',
+        '[data-automation-id*="foreach"]',
+        '[data-automation-id*="switch"]'
       ];
 
+      const processedElements = new Set();
+
       selectors.forEach(selector => {
-        const elements = document.querySelectorAll(selector);
-        elements.forEach(element => {
-          if (!element.dataset.pwrflowAnnotated) {
-            this.addAnnotationButton(element);
-            element.dataset.pwrflowAnnotated = 'true';
-          }
-        });
+        try {
+          const elements = document.querySelectorAll(selector);
+          elements.forEach(element => {
+            // Skip if already processed
+            if (processedElements.has(element)) return;
+
+            // Skip our own elements
+            if (element.closest('.pwrflow-modal') ||
+                element.classList.contains('pwrflow-annotate-btn')) {
+              return;
+            }
+
+            // Check if element looks like a flow card
+            if (this.isFlowElement(element) && !element.dataset.pwrflowAnnotated) {
+              this.addAnnotationButton(element);
+              element.dataset.pwrflowAnnotated = 'true';
+              processedElements.add(element);
+            }
+          });
+        } catch (error) {
+          // Skip selector if it causes issues
+          console.debug('[PWRFlowNotate] Selector failed:', selector, error);
+        }
       });
     } catch (error) {
       console.error('[PWRFlowNotate] Error injecting controls:', error);
     }
+  }
+
+  /**
+   * Check if an element looks like a flow action/trigger card
+   */
+  isFlowElement(element) {
+    // Must have some minimum size (not a tiny element)
+    const rect = element.getBoundingClientRect();
+    if (rect.width < 100 || rect.height < 50) return false;
+
+    // Check for common Power Automate card characteristics
+    const hasCardClass = element.className && (
+      element.className.includes('card') ||
+      element.className.includes('Card') ||
+      element.className.includes('action') ||
+      element.className.includes('trigger')
+    );
+
+    const hasAutomationId = element.hasAttribute('data-automation-id');
+
+    const hasButtonRole = element.getAttribute('role') === 'button' ||
+                          element.getAttribute('role') === 'group';
+
+    // Must have at least one characteristic
+    return hasCardClass || hasAutomationId || hasButtonRole;
   }
 
   /**
