@@ -184,11 +184,7 @@ class PWRFlowNotate {
    * Check if an element looks like a flow action/trigger card
    */
   isFlowElement(element) {
-    // Must have some minimum size (not a tiny element)
-    const rect = element.getBoundingClientRect();
-    if (rect.width < 100 || rect.height < 50) return false;
-
-    // Check for common Power Automate card characteristics
+    // Check for common Power Automate card characteristics first
     const hasCardClass = element.className && (
       element.className.includes('card') ||
       element.className.includes('Card') ||
@@ -202,7 +198,22 @@ class PWRFlowNotate {
                           element.getAttribute('role') === 'group';
 
     // Must have at least one characteristic
-    return hasCardClass || hasAutomationId || hasButtonRole;
+    if (!hasCardClass && !hasAutomationId && !hasButtonRole) {
+      return false;
+    }
+
+    // Get size for additional validation
+    const rect = element.getBoundingClientRect();
+
+    // Very lenient size check - just filter out truly tiny elements (like icons)
+    // Allow small/compact actions like Compose
+    if (rect.width < 50 || rect.height < 30) return false;
+
+    // If it has explicit automation ID, it's probably a flow element regardless of size
+    if (hasAutomationId && rect.width > 0 && rect.height > 0) return true;
+
+    // Otherwise check if it has minimum reasonable size
+    return rect.width >= 80 && rect.height >= 40;
   }
 
   /**
@@ -224,11 +235,22 @@ class PWRFlowNotate {
       this.showAnnotationModal(element);
     });
 
+    // Check if this is a compact/small action
+    const rect = element.getBoundingClientRect();
+    const isCompact = rect.height < 70;
+
+    if (isCompact) {
+      // For compact actions, make button smaller and position more carefully
+      button.style.fontSize = '14px';
+      button.style.padding = '4px 8px';
+    }
+
     // Try to find a good place to inject the button
     const headerSelectors = [
       '[class*="header"]',
       '[class*="title"]',
-      '[class*="card-header"]'
+      '[class*="card-header"]',
+      '[class*="cardHeader"]'
     ];
 
     let injected = false;
@@ -238,7 +260,8 @@ class PWRFlowNotate {
         header.style.position = 'relative';
         button.style.position = 'absolute';
         button.style.right = '8px';
-        button.style.top = '8px';
+        button.style.top = isCompact ? '4px' : '8px';
+        button.style.zIndex = '9999';
         header.appendChild(button);
         injected = true;
         break;
@@ -246,7 +269,12 @@ class PWRFlowNotate {
     }
 
     if (!injected) {
+      // Fallback: append to element itself
       element.style.position = 'relative';
+      button.style.position = 'absolute';
+      button.style.right = '8px';
+      button.style.top = isCompact ? '4px' : '8px';
+      button.style.zIndex = '9999';
       element.appendChild(button);
     }
   }
