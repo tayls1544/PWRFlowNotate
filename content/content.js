@@ -479,43 +479,17 @@ class PWRFlowNotate {
       const badge = document.createElement('div');
       badge.className = 'pwrflow-comment-badge';
       badge.innerHTML = '💬';
+      badge.title = 'Click to view comment';
+      badge.style.cursor = 'pointer';
 
-      // Check if comment is long
-      const isLongComment = annotation.comment.length > 150;
-      const previewText = isLongComment
-        ? annotation.comment.substring(0, 150) + '...'
-        : annotation.comment;
-
-      badge.title = isLongComment
-        ? previewText + '\n\n(Click badge to see full comment)'
-        : annotation.comment;
-
-      // Make badge clickable for long comments
-      if (isLongComment) {
-        badge.style.cursor = 'pointer';
-        badge.addEventListener('click', (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          this.showCommentModal(annotation.comment);
-        });
-      }
+      // Make badge clickable to show full comment
+      badge.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        this.showCommentModal(annotation.comment);
+      });
 
       element.appendChild(badge);
-
-      // Show comment on hover
-      const tooltip = document.createElement('div');
-      tooltip.className = 'pwrflow-comment-tooltip';
-      tooltip.textContent = previewText;
-
-      if (isLongComment) {
-        // Add click hint
-        const hint = document.createElement('div');
-        hint.className = 'pwrflow-tooltip-hint';
-        hint.textContent = '💡 Click 💬 badge to see full comment';
-        tooltip.appendChild(hint);
-      }
-
-      element.appendChild(tooltip);
     }
 
     // Add tags
