@@ -9,6 +9,8 @@ class PWRFlowNotate {
     this.observers = [];
     this.initialized = false;
     this.activeModal = null;
+    this.isUpdating = false;  // Prevent infinite loops
+    this.updateTimeout = null;  // Debounce updates
     this.loadAnnotations();
   }
 
@@ -72,9 +74,31 @@ class PWRFlowNotate {
    */
   observeFlowChanges() {
     const observer = new MutationObserver((mutations) => {
-      // Re-inject annotation controls when new elements appear
-      this.injectAnnotationControls();
-      this.applyAnnotations();
+      // Prevent infinite loops - ignore our own changes
+      if (this.isUpdating) return;
+
+      // Debounce updates to avoid excessive processing
+      if (this.updateTimeout) {
+        clearTimeout(this.updateTimeout);
+      }
+
+      this.updateTimeout = setTimeout(() => {
+        // Check if mutations are from our own elements
+        const isOwnMutation = mutations.some(mutation => {
+          const target = mutation.target;
+          return target.classList?.contains('pwrflow-modal') ||
+                 target.classList?.contains('pwrflow-comment-badge') ||
+                 target.classList?.contains('pwrflow-tags-container') ||
+                 target.closest('.pwrflow-modal');
+        });
+
+        // Skip if this is our own change
+        if (isOwnMutation) return;
+
+        // Re-inject annotation controls when new elements appear
+        this.injectAnnotationControls();
+        this.applyAnnotations();
+      }, 300);  // Wait 300ms after last change
     });
 
     observer.observe(document.body, {
@@ -89,26 +113,33 @@ class PWRFlowNotate {
    * Inject annotation controls (buttons) to flow actions
    */
   injectAnnotationControls() {
-    // Find all flow action cards/elements
-    const selectors = [
-      '[data-automation-id*="action"]',
-      '[data-automation-id*="trigger"]',
-      '[class*="action-card"]',
-      '[class*="trigger-card"]',
-      '[class*="flowcard"]',
-      '.card-container',
-      '[role="button"][class*="card"]'
-    ];
+    // Prevent infinite loops
+    if (this.isUpdating) return;
 
-    selectors.forEach(selector => {
-      const elements = document.querySelectorAll(selector);
-      elements.forEach(element => {
-        if (!element.dataset.pwrflowAnnotated) {
-          this.addAnnotationButton(element);
-          element.dataset.pwrflowAnnotated = 'true';
-        }
+    try {
+      // Find all flow action cards/elements
+      const selectors = [
+        '[data-automation-id*="action"]',
+        '[data-automation-id*="trigger"]',
+        '[class*="action-card"]',
+        '[class*="trigger-card"]',
+        '[class*="flowcard"]',
+        '.card-container',
+        '[role="button"][class*="card"]'
+      ];
+
+      selectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(element => {
+          if (!element.dataset.pwrflowAnnotated) {
+            this.addAnnotationButton(element);
+            element.dataset.pwrflowAnnotated = 'true';
+          }
+        });
       });
-    });
+    } catch (error) {
+      console.error('[PWRFlowNotate] Error injecting controls:', error);
+    }
   }
 
   /**
@@ -288,9 +319,19 @@ class PWRFlowNotate {
     const annotation = { comment, color: selectedColor, tags };
     this.annotations[elementId] = annotation;
 
-    await this.saveAnnotations();
-    this.applyAnnotationToElement(element, annotation);
-    this.closeModal();
+    // Prevent mutation observer from triggering
+    this.isUpdating = true;
+
+    try {
+      await this.saveAnnotations();
+      this.applyAnnotationToElement(element, annotation);
+      this.closeModal();
+    } finally {
+      // Re-enable mutation observer after a short delay
+      setTimeout(() => {
+        this.isUpdating = false;
+      }, 100);
+    }
   }
 
   /**
@@ -300,9 +341,19 @@ class PWRFlowNotate {
     const elementId = this.getElementId(element);
     delete this.annotations[elementId];
 
-    await this.saveAnnotations();
-    this.removeAnnotationFromElement(element);
-    this.closeModal();
+    // Prevent mutation observer from triggering
+    this.isUpdating = true;
+
+    try {
+      await this.saveAnnotations();
+      this.removeAnnotationFromElement(element);
+      this.closeModal();
+    } finally {
+      // Re-enable mutation observer after a short delay
+      setTimeout(() => {
+        this.isUpdating = false;
+      }, 100);
+    }
   }
 
   /**
@@ -385,12 +436,27 @@ class PWRFlowNotate {
    * Apply all saved annotations to the page
    */
   applyAnnotations() {
-    Object.keys(this.annotations).forEach(elementId => {
-      const element = this.findElementById(elementId);
-      if (element) {
-        this.applyAnnotationToElement(element, this.annotations[elementId]);
-      }
-    });
+    // Prevent infinite loops
+    if (this.isUpdating) return;
+
+    this.isUpdating = true;
+
+    try {
+      Object.keys(this.annotations).forEach(elementId => {
+        try {
+          const element = this.findElementById(elementId);
+          if (element) {
+            this.applyAnnotationToElement(element, this.annotations[elementId]);
+          }
+        } catch (error) {
+          console.error('[PWRFlowNotate] Error applying annotation:', error);
+        }
+      });
+    } finally {
+      setTimeout(() => {
+        this.isUpdating = false;
+      }, 100);
+    }
   }
 
   /**
@@ -452,9 +518,11 @@ class PWRFlowNotate {
       allAnnotations[url] = this.annotations;
 
       await chrome.storage.local.set({ annotations: allAnnotations });
-      console.log('[PWRFlowNotate] Saved annotations');
+      console.log('[PWRFlowNotate] Saved annotations successfully');
     } catch (error) {
       console.error('[PWRFlowNotate] Error saving annotations:', error);
+      // Show user-friendly error
+      alert('Failed to save annotation. Please check browser console for details.');
     }
   }
 }
@@ -462,10 +530,22 @@ class PWRFlowNotate {
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    const notate = new PWRFlowNotate();
-    notate.init();
+    try {
+      const notate = new PWRFlowNotate();
+      notate.init().catch(error => {
+        console.error('[PWRFlowNotate] Initialization failed:', error);
+      });
+    } catch (error) {
+      console.error('[PWRFlowNotate] Failed to create instance:', error);
+    }
   });
 } else {
-  const notate = new PWRFlowNotate();
-  notate.init();
+  try {
+    const notate = new PWRFlowNotate();
+    notate.init().catch(error => {
+      console.error('[PWRFlowNotate] Initialization failed:', error);
+    });
+  } catch (error) {
+    console.error('[PWRFlowNotate] Failed to create instance:', error);
+  }
 }
