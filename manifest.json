@@ -39,7 +39,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["content/annotations.css", "content/annotation-modal.html"],
+      "resources": ["content/annotations.css"],
       "matches": ["https://make.powerautomate.com/*", "https://*.flow.microsoft.com/*"]
     }
   ]
