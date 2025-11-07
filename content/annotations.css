@@ -104,7 +104,9 @@
   color: white;
   padding: 12px 16px;
   border-radius: 8px;
-  max-width: 400px;
+  max-width: 350px;
+  max-height: 200px;
+  overflow-y: auto;
   font-size: 13px;
   line-height: 1.5;
   z-index: 10001;
@@ -129,6 +131,15 @@
 
 .pwrflow-comment-badge:hover + .pwrflow-comment-tooltip {
   display: block;
+}
+
+.pwrflow-tooltip-hint {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 11px;
+  font-style: italic;
+  opacity: 0.8;
 }
 
 /* ============================================
@@ -439,4 +450,80 @@
     transition: none;
     animation: none;
   }
+}
+
+/* ============================================
+   Comment Modal (for long comments)
+   ============================================ */
+.pwrflow-comment-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  animation: fadeIn 0.2s ease;
+}
+
+.pwrflow-comment-modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease;
+}
+
+.pwrflow-comment-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px 12px 0 0;
+  flex-shrink: 0;
+}
+
+.pwrflow-comment-modal-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.pwrflow-comment-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.pwrflow-full-comment {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.pwrflow-comment-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+  flex-shrink: 0;
+}
+
+.pwrflow-comment-modal-footer .pwrflow-btn {
+  min-width: 100px;
 }

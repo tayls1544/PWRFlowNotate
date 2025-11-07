@@ -479,13 +479,42 @@ class PWRFlowNotate {
       const badge = document.createElement('div');
       badge.className = 'pwrflow-comment-badge';
       badge.innerHTML = '💬';
-      badge.title = annotation.comment;
+
+      // Check if comment is long
+      const isLongComment = annotation.comment.length > 150;
+      const previewText = isLongComment
+        ? annotation.comment.substring(0, 150) + '...'
+        : annotation.comment;
+
+      badge.title = isLongComment
+        ? previewText + '\n\n(Click badge to see full comment)'
+        : annotation.comment;
+
+      // Make badge clickable for long comments
+      if (isLongComment) {
+        badge.style.cursor = 'pointer';
+        badge.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          this.showCommentModal(annotation.comment);
+        });
+      }
+
       element.appendChild(badge);
 
       // Show comment on hover
       const tooltip = document.createElement('div');
       tooltip.className = 'pwrflow-comment-tooltip';
-      tooltip.textContent = annotation.comment;
+      tooltip.textContent = previewText;
+
+      if (isLongComment) {
+        // Add click hint
+        const hint = document.createElement('div');
+        hint.className = 'pwrflow-tooltip-hint';
+        hint.textContent = '💡 Click 💬 badge to see full comment';
+        tooltip.appendChild(hint);
+      }
+
       element.appendChild(tooltip);
     }
 
@@ -503,6 +532,55 @@ class PWRFlowNotate {
 
       element.appendChild(tagsContainer);
     }
+  }
+
+  /**
+   * Show full comment in a modal
+   */
+  showCommentModal(comment) {
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'pwrflow-comment-modal';
+    modal.innerHTML = `
+      <div class="pwrflow-comment-modal-content">
+        <div class="pwrflow-comment-modal-header">
+          <h3>📝 Full Comment</h3>
+          <button class="pwrflow-modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="pwrflow-comment-modal-body">
+          <div class="pwrflow-full-comment">${this.escapeHtml(comment)}</div>
+        </div>
+        <div class="pwrflow-comment-modal-footer">
+          <button class="pwrflow-btn pwrflow-btn-primary" id="pwrflow-close-comment">Close</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Event listeners
+    modal.querySelector('.pwrflow-modal-close').addEventListener('click', () => {
+      modal.remove();
+    });
+
+    modal.querySelector('#pwrflow-close-comment').addEventListener('click', () => {
+      modal.remove();
+    });
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  /**
+   * Escape HTML to prevent XSS
+   */
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   /**
