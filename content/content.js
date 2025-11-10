@@ -3,6 +3,28 @@
  * Injects annotation capabilities into Power Automate flow designer
  */
 
+/**
+ * Extract Flow ID from Power Automate URL
+ * @param {string} url - The full URL
+ * @returns {string|null} - The flow ID or null if not found
+ */
+function extractFlowId(url) {
+  try {
+    // Pattern: /flows/{flow-id}
+    const flowMatch = url.match(/\/flows\/([a-f0-9-]+)/i);
+    if (flowMatch && flowMatch[1]) {
+      return flowMatch[1];
+    }
+
+    // Fallback: use full URL if we can't extract flow ID
+    console.warn('[PWRFlowNotate] Could not extract flow ID from URL:', url);
+    return url;
+  } catch (error) {
+    console.error('[PWRFlowNotate] Error extracting flow ID:', error);
+    return url;
+  }
+}
+
 class PWRFlowNotate {
   constructor() {
     this.annotations = {};
@@ -641,8 +663,13 @@ class PWRFlowNotate {
     try {
       const result = await chrome.storage.local.get(['annotations']);
       const url = window.location.href;
+      const flowId = extractFlowId(url);
       const allAnnotations = result.annotations || {};
-      this.annotations = allAnnotations[url] || {};
+
+      // Try flow ID first, fallback to URL for backwards compatibility
+      this.annotations = allAnnotations[flowId] || allAnnotations[url] || {};
+
+      console.log('[PWRFlowNotate] Flow ID:', flowId);
       console.log('[PWRFlowNotate] Loaded annotations:', Object.keys(this.annotations).length);
     } catch (error) {
       console.error('[PWRFlowNotate] Error loading annotations:', error);
@@ -656,12 +683,21 @@ class PWRFlowNotate {
   async saveAnnotations() {
     try {
       const url = window.location.href;
+      const flowId = extractFlowId(url);
       const result = await chrome.storage.local.get(['annotations']);
       const allAnnotations = result.annotations || {};
-      allAnnotations[url] = this.annotations;
+
+      // Save using flow ID as key
+      allAnnotations[flowId] = this.annotations;
+
+      // Clean up old URL-based entry if it exists (migration)
+      if (allAnnotations[url] && url !== flowId) {
+        delete allAnnotations[url];
+        console.log('[PWRFlowNotate] Migrated from URL to Flow ID storage');
+      }
 
       await chrome.storage.local.set({ annotations: allAnnotations });
-      console.log('[PWRFlowNotate] Saved annotations successfully');
+      console.log('[PWRFlowNotate] Saved annotations successfully for flow:', flowId);
     } catch (error) {
       console.error('[PWRFlowNotate] Error saving annotations:', error);
       // Show user-friendly error

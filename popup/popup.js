@@ -2,6 +2,27 @@
  * PWRFlow Notate - Popup Script
  */
 
+/**
+ * Extract Flow ID from Power Automate URL
+ * @param {string} url - The full URL
+ * @returns {string|null} - The flow ID or null if not found
+ */
+function extractFlowId(url) {
+  try {
+    // Pattern: /flows/{flow-id}
+    const flowMatch = url.match(/\/flows\/([a-f0-9-]+)/i);
+    if (flowMatch && flowMatch[1]) {
+      return flowMatch[1];
+    }
+
+    // Fallback: use full URL if we can't extract flow ID
+    return url;
+  } catch (error) {
+    console.error('Error extracting flow ID:', error);
+    return url;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   // Load statistics
   await loadStats();
@@ -120,10 +141,16 @@ async function viewAnnotations() {
       return;
     }
 
-    // Get annotations for current URL
+    // Get annotations for current flow
     const result = await chrome.storage.local.get(['annotations']);
     const allAnnotations = result.annotations || {};
-    const flowAnnotations = allAnnotations[tab.url] || {};
+    const flowId = extractFlowId(tab.url);
+
+    // Try flow ID first, fallback to full URL for backwards compatibility
+    const flowAnnotations = allAnnotations[flowId] || allAnnotations[tab.url] || {};
+
+    console.log('Flow ID:', flowId);
+    console.log('Annotations count:', Object.keys(flowAnnotations).length);
 
     // Display the modal
     displayAnnotationsList(flowAnnotations);
