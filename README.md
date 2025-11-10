@@ -54,6 +54,14 @@ A Chrome browser extension that enhances Power Automate's visual designer by add
 - Convert to PDF or share with your team
 - Perfect for compliance documentation and team handoffs
 
+### 🔍 Search Across All Annotations
+- Powerful search bar to find annotations across all flows
+- Search through comments, tags, and action names
+- Filter results by color category
+- See results with flow ID, action name, and text snippets
+- Click result to copy Flow URL to clipboard
+- Perfect for finding "Where did I document that API key?"
+
 ## 🚀 Installation
 
 ### Install from Source (Development)
@@ -171,6 +179,32 @@ The extension will be available on the Chrome Web Store once published.
 2. Click "🎨 Color Guide" to expand the legend
 3. Reference what each color represents
 4. Use as a quick guide when annotating
+
+#### Search Across All Annotations
+1. Click the PWRFlow Notate extension icon
+2. Type your search query in the search bar (e.g., "API key", "error handling")
+3. Optionally filter by color using the dropdown
+4. View results showing:
+   - Flow ID (shortened)
+   - Action name
+   - Matching text snippet (highlighted)
+   - Color indicator
+   - Associated tags
+5. Click any result to copy the Flow URL to your clipboard
+6. Navigate to the flow to view the annotation
+
+**Search capabilities:**
+- Searches through all comments, tags, and action names
+- Real-time results as you type (300ms debounce)
+- Color filtering for targeted searches
+- Highlighted matching text
+- Quick access to flows via URL copy
+
+**Use cases:**
+- "Where did I document that SharePoint list?"
+- "Find all flows with error handling"
+- "Show me all critical annotations"
+- "Which flows mention API timeout?"
 
 #### Clear All Annotations
 1. Click the PWRFlow Notate extension icon
@@ -322,7 +356,7 @@ cd PWRFlowNotate
 - [x] Cloud sync across devices (via chrome.storage.sync) ✅ v1.3.0
 - [x] Color guide/legend ✅ v1.4.0
 - [x] Export to Markdown ✅ v1.4.0
-- [ ] Search and filter annotations
+- [x] Search and filter annotations ✅ v1.5.0
 - [ ] Annotation templates
 - [ ] Annotation history/versioning
 - [ ] Collaborative annotations
@@ -330,6 +364,8 @@ cd PWRFlowNotate
 - [ ] Dark mode support
 - [ ] Custom color meanings
 - [ ] Bulk annotation operations
+- [ ] Advanced search with regex support
+- [ ] Export search results
 
 ## 📄 License
 
@@ -380,5 +416,5 @@ Hover tooltips show your annotations:
 
 Made with 💜 for Power Automate users
 
-**Version**: 1.4.0
+**Version**: 1.5.0
 **Last Updated**: 2025-11-10

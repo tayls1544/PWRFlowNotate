@@ -44,6 +44,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Color legend toggle
   document.getElementById('color-legend-toggle').addEventListener('click', toggleColorLegend);
 
+  // Search functionality
+  const searchInput = document.getElementById('search-input');
+  const colorFilter = document.getElementById('color-filter');
+
+  let searchTimeout;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      performSearch();
+    }, 300); // Debounce search
+  });
+
+  colorFilter.addEventListener('change', () => {
+    if (searchInput.value.trim()) {
+      performSearch();
+    }
+  });
+
   // Close modal on background click
   document.getElementById('annotations-modal').addEventListener('click', (e) => {
     if (e.target.id === 'annotations-modal') {
@@ -540,4 +558,181 @@ function generateMarkdownDocumentation(flowId, flowUrl, annotations) {
   markdown += `**Total Annotations:** ${Object.keys(annotations).length}\n`;
 
   return markdown;
+}
+
+/**
+ * Perform search across all annotations
+ */
+async function performSearch() {
+  const searchQuery = document.getElementById('search-input').value.trim().toLowerCase();
+  const colorFilterValue = document.getElementById('color-filter').value;
+  const resultsContainer = document.getElementById('search-results');
+
+  // Hide results if search is empty
+  if (!searchQuery) {
+    resultsContainer.style.display = 'none';
+    return;
+  }
+
+  try {
+    // Get all annotations
+    const result = await chrome.storage.sync.get(['annotations']);
+    const allAnnotations = result.annotations || {};
+
+    const searchResults = [];
+
+    // Search through all flows
+    Object.entries(allAnnotations).forEach(([flowId, flowAnnotations]) => {
+      Object.entries(flowAnnotations).forEach(([elementId, annotation]) => {
+        // Apply color filter if set
+        if (colorFilterValue && annotation.color !== colorFilterValue) {
+          return;
+        }
+
+        // Search in comment text
+        const commentMatch = annotation.comment &&
+          annotation.comment.toLowerCase().includes(searchQuery);
+
+        // Search in tags
+        const tagMatch = annotation.tags &&
+          annotation.tags.some(tag => tag.toLowerCase().includes(searchQuery));
+
+        // Search in element ID
+        const elementMatch = elementId.toLowerCase().includes(searchQuery);
+
+        if (commentMatch || tagMatch || elementMatch) {
+          searchResults.push({
+            flowId,
+            elementId,
+            annotation,
+            matchedText: annotation.comment || elementId
+          });
+        }
+      });
+    });
+
+    // Display results
+    displaySearchResults(searchResults, searchQuery);
+
+  } catch (error) {
+    console.error('Error performing search:', error);
+  }
+}
+
+/**
+ * Display search results
+ */
+function displaySearchResults(results, searchQuery) {
+  const resultsContainer = document.getElementById('search-results');
+  resultsContainer.innerHTML = '';
+
+  if (results.length === 0) {
+    resultsContainer.innerHTML = `
+      <div class="search-no-results">
+        <div>No results found for "${escapeHtml(searchQuery)}"</div>
+        <div style="margin-top: 8px; font-size: 10px;">Try a different search term or color filter</div>
+      </div>
+    `;
+    resultsContainer.style.display = 'block';
+    return;
+  }
+
+  // Add stats header
+  const statsDiv = document.createElement('div');
+  statsDiv.className = 'search-stats';
+  statsDiv.textContent = `Found ${results.length} result${results.length !== 1 ? 's' : ''}`;
+  resultsContainer.appendChild(statsDiv);
+
+  // Add each result
+  results.forEach(({ flowId, elementId, annotation, matchedText }) => {
+    const resultItem = document.createElement('div');
+    resultItem.className = 'search-result-item';
+
+    // Truncate flow ID for display
+    const displayFlowId = flowId.length > 12 ? flowId.substring(0, 12) + '...' : flowId;
+
+    // Get color info
+    const colorInfo = annotation.color ? getColorInfo(annotation.color) : null;
+
+    // Highlight matching text in snippet
+    const snippet = highlightText(matchedText.substring(0, 150), searchQuery);
+
+    let html = '<div class="search-result-header">';
+    html += `<span class="search-result-flow">${escapeHtml(displayFlowId)}</span>`;
+
+    if (colorInfo) {
+      html += `<div class="search-result-color" style="background: ${colorInfo.hex}"></div>`;
+    }
+
+    // Action name
+    let actionName = elementId.length > 30 ? elementId.substring(0, 30) + '...' : elementId;
+    html += `<span class="search-result-action" title="${escapeHtml(elementId)}">${escapeHtml(actionName)}</span>`;
+    html += '</div>';
+
+    // Snippet
+    if (annotation.comment) {
+      html += `<div class="search-result-snippet">${snippet}</div>`;
+    }
+
+    // Tags
+    if (annotation.tags && annotation.tags.length > 0) {
+      html += '<div class="search-result-tags">';
+      annotation.tags.forEach(tag => {
+        html += `<span class="search-result-tag">${escapeHtml(tag)}</span>`;
+      });
+      html += '</div>';
+    }
+
+    // Copy hint
+    html += `<div class="search-result-copy">Click to copy Flow URL</div>`;
+
+    resultItem.innerHTML = html;
+
+    // Click to copy flow URL
+    resultItem.addEventListener('click', () => {
+      const flowUrl = `https://make.powerautomate.com/manage/environments/Default-/flows/${flowId}/details`;
+      copyToClipboard(flowUrl);
+
+      // Visual feedback
+      const originalBg = resultItem.style.background;
+      resultItem.style.background = 'rgba(68, 255, 68, 0.2)';
+      setTimeout(() => {
+        resultItem.style.background = originalBg;
+      }, 500);
+    });
+
+    resultsContainer.appendChild(resultItem);
+  });
+
+  resultsContainer.style.display = 'block';
+}
+
+/**
+ * Highlight search query in text
+ */
+function highlightText(text, query) {
+  const escapedText = escapeHtml(text);
+  const regex = new RegExp(`(${escapeHtml(query)})`, 'gi');
+  return escapedText.replace(regex, '<mark>$1</mark>');
+}
+
+/**
+ * Copy text to clipboard
+ */
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    console.log('Copied to clipboard:', text);
+  } catch (error) {
+    console.error('Failed to copy to clipboard:', error);
+    // Fallback method
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+  }
 }

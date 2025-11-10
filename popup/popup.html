@@ -377,6 +377,176 @@
     .color-legend-text strong {
       color: #333;
     }
+
+    /* Search Section */
+    .search-section {
+      background: white;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 16px;
+    }
+
+    .search-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      background: white;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .search-input::placeholder {
+      color: #999;
+    }
+
+    .search-filters {
+      display: flex;
+      gap: 8px;
+    }
+
+    .filter-select {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: inherit;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .search-results {
+      margin-top: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background: #f8f9fa;
+    }
+
+    .search-result-item {
+      padding: 10px;
+      border-bottom: 1px solid #e0e0e0;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .search-result-item:last-child {
+      border-bottom: none;
+    }
+
+    .search-result-item:hover {
+      background: rgba(102, 126, 234, 0.05);
+    }
+
+    .search-result-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .search-result-flow {
+      font-size: 10px;
+      color: #667eea;
+      font-weight: 600;
+      background: rgba(102, 126, 234, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .search-result-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .search-result-action {
+      font-size: 11px;
+      font-weight: 600;
+      color: #333;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .search-result-snippet {
+      font-size: 11px;
+      color: #666;
+      line-height: 1.4;
+      margin-bottom: 6px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .search-result-snippet mark {
+      background: #ffd700;
+      padding: 1px 2px;
+      border-radius: 2px;
+      font-weight: 600;
+    }
+
+    .search-result-tags {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .search-result-tag {
+      font-size: 9px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+
+    .search-no-results {
+      padding: 30px 20px;
+      text-align: center;
+      color: #999;
+      font-size: 12px;
+    }
+
+    .search-stats {
+      padding: 8px 10px;
+      background: rgba(102, 126, 234, 0.1);
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 11px;
+      color: #667eea;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .search-result-copy {
+      font-size: 9px;
+      color: #999;
+      margin-top: 4px;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -384,6 +554,28 @@
     <div class="header">
       <h1>📝 PWRFlow Notate</h1>
       <p>Annotate your Power Automate flows</p>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-section">
+      <div class="search-container">
+        <input type="text" id="search-input" class="search-input" placeholder="🔍 Search all annotations...">
+        <div class="search-filters">
+          <select id="color-filter" class="filter-select">
+            <option value="">All Colors</option>
+            <option value="red">🔴 Red</option>
+            <option value="orange">🟠 Orange</option>
+            <option value="yellow">🟡 Yellow</option>
+            <option value="green">🟢 Green</option>
+            <option value="blue">🔵 Blue</option>
+            <option value="purple">🟣 Purple</option>
+            <option value="pink">🩷 Pink</option>
+          </select>
+        </div>
+      </div>
+      <div id="search-results" class="search-results" style="display: none;">
+        <!-- Results will be populated here -->
+      </div>
     </div>
 
     <div class="content">
