@@ -59,8 +59,87 @@ class PWRFlowNotate {
     // Apply existing annotations
     this.applyAnnotations();
 
+    // Check for highlight parameter in URL
+    this.checkForHighlight();
+
     this.initialized = true;
     console.log('[PWRFlowNotate] Initialized successfully');
+  }
+
+  /**
+   * Check if URL contains highlight parameter and highlight the element
+   */
+  checkForHighlight() {
+    try {
+      const hash = window.location.hash;
+      if (hash.includes('pwrflow-highlight=')) {
+        const match = hash.match(/pwrflow-highlight=([^&]+)/);
+        if (match && match[1]) {
+          const elementId = decodeURIComponent(match[1]);
+          console.log('[PWRFlowNotate] Highlighting element:', elementId);
+
+          // Wait a bit for the page to fully render
+          setTimeout(() => {
+            this.highlightElement(elementId);
+          }, 1500);
+        }
+      }
+    } catch (error) {
+      console.error('[PWRFlowNotate] Error checking for highlight:', error);
+    }
+  }
+
+  /**
+   * Highlight a specific element with pulsing animation
+   */
+  highlightElement(elementId) {
+    try {
+      // Find the element - try multiple approaches
+      let element = document.querySelector(`[data-automation-id="${elementId}"]`);
+
+      // If not found by automation-id, try finding by partial match
+      if (!element) {
+        const allElements = document.querySelectorAll('[data-automation-id]');
+        for (const el of allElements) {
+          const autoId = el.getAttribute('data-automation-id');
+          if (autoId && autoId.includes(elementId)) {
+            element = el;
+            break;
+          }
+        }
+      }
+
+      // Try finding the annotated element directly
+      if (!element) {
+        element = document.querySelector(`.pwrflow-annotated[data-element-id="${elementId}"]`);
+      }
+
+      if (element) {
+        console.log('[PWRFlowNotate] Found element to highlight:', element);
+
+        // Scroll element into view
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Add highlight class
+        element.classList.add('pwrflow-search-highlight');
+
+        // Remove highlight after animation
+        setTimeout(() => {
+          element.classList.remove('pwrflow-search-highlight');
+        }, 5000);
+
+        // Clear the hash from URL after highlighting
+        setTimeout(() => {
+          if (window.location.hash.includes('pwrflow-highlight=')) {
+            history.replaceState(null, null, window.location.pathname + window.location.search);
+          }
+        }, 1000);
+      } else {
+        console.warn('[PWRFlowNotate] Could not find element to highlight:', elementId);
+      }
+    } catch (error) {
+      console.error('[PWRFlowNotate] Error highlighting element:', error);
+    }
   }
 
   /**

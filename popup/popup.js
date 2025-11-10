@@ -684,18 +684,21 @@ function displaySearchResults(results, searchQuery) {
     }
 
     // Copy hint
-    html += `<div class="search-result-copy">Click to copy Flow URL</div>`;
+    html += `<div class="search-result-copy">Click to open flow and highlight action</div>`;
 
     resultItem.innerHTML = html;
 
-    // Click to copy flow URL
-    resultItem.addEventListener('click', () => {
-      const flowUrl = `https://make.powerautomate.com/manage/environments/Default-/flows/${flowId}/details`;
-      copyToClipboard(flowUrl);
+    // Click to open flow and highlight element
+    resultItem.addEventListener('click', async () => {
+      // Construct URL with element ID in hash for highlighting
+      const flowUrl = `https://make.powerautomate.com/manage/environments/Default-/flows/${flowId}/details#pwrflow-highlight=${encodeURIComponent(elementId)}`;
+
+      // Open in new tab
+      await chrome.tabs.create({ url: flowUrl });
 
       // Visual feedback
       const originalBg = resultItem.style.background;
-      resultItem.style.background = 'rgba(68, 255, 68, 0.2)';
+      resultItem.style.background = 'rgba(102, 126, 234, 0.3)';
       setTimeout(() => {
         resultItem.style.background = originalBg;
       }, 500);
