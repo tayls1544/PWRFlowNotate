@@ -302,6 +302,81 @@
       font-size: 48px;
       margin-bottom: 16px;
     }
+
+    /* Color Legend */
+    .color-legend-container {
+      margin-top: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .color-legend-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: rgba(102, 126, 234, 0.1);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: #667eea;
+      transition: background 0.2s ease;
+    }
+
+    .color-legend-header:hover {
+      background: rgba(102, 126, 234, 0.15);
+    }
+
+    .toggle-icon {
+      transition: transform 0.3s ease;
+      font-size: 10px;
+    }
+
+    .toggle-icon.expanded {
+      transform: rotate(-180deg);
+    }
+
+    .color-legend-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      background: white;
+    }
+
+    .color-legend-content.expanded {
+      max-height: 300px;
+      padding: 12px;
+    }
+
+    .color-legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .color-legend-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .color-legend-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      margin-right: 10px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .color-legend-text {
+      font-size: 11px;
+      color: #666;
+      line-height: 1.4;
+    }
+
+    .color-legend-text strong {
+      color: #333;
+    }
   </style>
 </head>
 <body>
@@ -336,6 +411,58 @@
         </div>
       </div>
 
+      <!-- Color Legend -->
+      <div class="color-legend-container">
+        <div class="color-legend-header" id="color-legend-toggle">
+          <span>🎨 Color Guide</span>
+          <span class="toggle-icon">▼</span>
+        </div>
+        <div class="color-legend-content" id="color-legend-content">
+          <div class="color-legend-item">
+            <div class="color-legend-dot" style="background: #ff4444;"></div>
+            <div class="color-legend-text">
+              <strong>Red</strong> - Critical/Errors
+            </div>
+          </div>
+          <div class="color-legend-item">
+            <div class="color-legend-dot" style="background: #ff8c00;"></div>
+            <div class="color-legend-text">
+              <strong>Orange</strong> - Needs Attention
+            </div>
+          </div>
+          <div class="color-legend-item">
+            <div class="color-legend-dot" style="background: #ffd700;"></div>
+            <div class="color-legend-text">
+              <strong>Yellow</strong> - Warning
+            </div>
+          </div>
+          <div class="color-legend-item">
+            <div class="color-legend-dot" style="background: #44ff44;"></div>
+            <div class="color-legend-text">
+              <strong>Green</strong> - Approved/Complete
+            </div>
+          </div>
+          <div class="color-legend-item">
+            <div class="color-legend-dot" style="background: #4444ff;"></div>
+            <div class="color-legend-text">
+              <strong>Blue</strong> - Information
+            </div>
+          </div>
+          <div class="color-legend-item">
+            <div class="color-legend-dot" style="background: #9944ff;"></div>
+            <div class="color-legend-text">
+              <strong>Purple</strong> - Dependencies
+            </div>
+          </div>
+          <div class="color-legend-item">
+            <div class="color-legend-dot" style="background: #ff44ff;"></div>
+            <div class="color-legend-text">
+              <strong>Pink</strong> - Review Required
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="stats">
         <div class="stat-card">
           <div class="stat-value" id="annotation-count">0</div>
@@ -354,7 +481,8 @@
 
     <div class="actions">
       <button class="btn btn-primary" id="view-annotations-btn">📋 View Annotations</button>
-      <button class="btn btn-primary" id="export-btn">💾 Export</button>
+      <button class="btn btn-primary" id="export-docs-btn">📄 Export Documentation</button>
+      <button class="btn btn-primary" id="export-btn">💾 Export Data</button>
       <button class="btn btn-primary" id="import-btn">📥 Import</button>
       <button class="btn btn-secondary" id="clear-btn">Clear All</button>
     </div>

@@ -395,21 +395,21 @@ class PWRFlowNotate {
    */
   generateColorOptions(selectedColor) {
     const colors = [
-      { name: 'None', value: '', hex: 'transparent' },
-      { name: 'Red', value: 'red', hex: '#ff4444' },
-      { name: 'Orange', value: 'orange', hex: '#ff8c00' },
-      { name: 'Yellow', value: 'yellow', hex: '#ffd700' },
-      { name: 'Green', value: 'green', hex: '#44ff44' },
-      { name: 'Blue', value: 'blue', hex: '#4444ff' },
-      { name: 'Purple', value: 'purple', hex: '#9944ff' },
-      { name: 'Pink', value: 'pink', hex: '#ff44ff' }
+      { name: 'None', value: '', hex: 'transparent', desc: 'No color' },
+      { name: 'Red', value: 'red', hex: '#ff4444', desc: 'Critical/Errors' },
+      { name: 'Orange', value: 'orange', hex: '#ff8c00', desc: 'Needs Attention' },
+      { name: 'Yellow', value: 'yellow', hex: '#ffd700', desc: 'Warning' },
+      { name: 'Green', value: 'green', hex: '#44ff44', desc: 'Approved/Complete' },
+      { name: 'Blue', value: 'blue', hex: '#4444ff', desc: 'Information' },
+      { name: 'Purple', value: 'purple', hex: '#9944ff', desc: 'Dependencies' },
+      { name: 'Pink', value: 'pink', hex: '#ff44ff', desc: 'Review Required' }
     ];
 
     return colors.map(color => `
       <div class="pwrflow-color-option ${selectedColor === color.value ? 'selected' : ''}"
            data-color="${color.value}"
            style="background-color: ${color.hex}"
-           title="${color.name}">
+           title="${color.name}${color.desc ? ' - ' + color.desc : ''}">
         ${color.value === '' ? '⊘' : ''}
       </div>
     `).join('');

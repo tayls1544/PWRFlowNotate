@@ -41,6 +41,19 @@ A Chrome browser extension that enhances Power Automate's visual designer by add
 - Monitor number of annotated flows
 - View statistics in the extension popup
 
+### 🎨 Color Guide
+- Interactive color legend in extension popup
+- Understand what each color represents
+- Collapsible reference guide for quick access
+
+### 📄 Flow Documentation Export
+- Export comprehensive flow documentation as editable Markdown
+- Documents all annotations organized by color category
+- Includes Flow ID, URL, and complete color legend
+- Edit in any text editor (VS Code, Notepad++, etc.)
+- Convert to PDF or share with your team
+- Perfect for compliance documentation and team handoffs
+
 ## 🚀 Installation
 
 ### Install from Source (Development)
@@ -119,11 +132,45 @@ The extension will be available on the Chrome Web Store once published.
 
 ### Managing Annotations
 
-#### Export Annotations
+#### View All Annotations
 1. Click the PWRFlow Notate extension icon
-2. Click "Export Annotations"
+2. Click "📋 View Annotations"
+3. A modal displays all annotations for the current flow
+4. See comments, colors, and tags organized by action
+
+#### Export Flow Documentation
+1. Navigate to the flow you want to document
+2. Click the PWRFlow Notate extension icon
+3. Click "📄 Export Documentation"
+4. Choose where to save the Markdown (.md) file
+5. Open in any text editor to customize
+6. Convert to PDF using Pandoc or online tools
+
+**What's included in the documentation:**
+- Flow ID and URL
+- Complete color legend
+- All annotations organized by color category
+- Comments, tags, and action names
+- Editable format for customization
+
+#### Export Annotations Data
+1. Click the PWRFlow Notate extension icon
+2. Click "💾 Export Data"
 3. Choose where to save the JSON file
 4. Use this for backup or sharing with team members
+
+#### Import Annotations
+1. Click the PWRFlow Notate extension icon
+2. Click "📥 Import"
+3. Select a previously exported JSON file
+4. Choose to merge with existing or replace all annotations
+5. Annotations are restored to all flows
+
+#### View Color Guide
+1. Click the PWRFlow Notate extension icon
+2. Click "🎨 Color Guide" to expand the legend
+3. Reference what each color represents
+4. Use as a quick guide when annotating
 
 #### Clear All Annotations
 1. Click the PWRFlow Notate extension icon
@@ -163,14 +210,17 @@ PWRFlowNotate/
 - `https://*.flow.microsoft.com/*`
 
 ### Storage
-- Uses Chrome's `chrome.storage.local` API
-- Annotations stored per-URL
+- Uses Chrome's `chrome.storage.sync` API
+- Annotations stored per Flow ID
+- Syncs across devices with same Chrome profile
+- Survives extension updates and reloads
 - No data sent to external servers
-- All data remains in your browser
+- All data remains in your browser/Google account
 
 ### Permissions
-- `storage` - Save annotations locally
+- `storage` - Save annotations locally and sync
 - `activeTab` - Interact with Power Automate pages
+- `downloads` - Export documentation and data files
 - `host_permissions` - Access Power Automate domains
 
 ### Browser Compatibility
@@ -267,16 +317,19 @@ cd PWRFlowNotate
 
 ## 📋 Roadmap
 
-- [ ] Import annotations from JSON
-- [ ] Share annotations with team members
-- [ ] Cloud sync across devices
-- [ ] Annotation templates
+- [x] Import annotations from JSON ✅ v1.2.0
+- [x] View all annotations for current flow ✅ v1.2.0
+- [x] Cloud sync across devices (via chrome.storage.sync) ✅ v1.3.0
+- [x] Color guide/legend ✅ v1.4.0
+- [x] Export to Markdown ✅ v1.4.0
 - [ ] Search and filter annotations
-- [ ] Export to PDF/Markdown
+- [ ] Annotation templates
 - [ ] Annotation history/versioning
 - [ ] Collaborative annotations
 - [ ] Integration with Microsoft Teams
 - [ ] Dark mode support
+- [ ] Custom color meanings
+- [ ] Bulk annotation operations
 
 ## 📄 License
 
@@ -327,5 +380,5 @@ Hover tooltips show your annotations:
 
 Made with 💜 for Power Automate users
 
-**Version**: 1.0.0
-**Last Updated**: 2025-11-07
+**Version**: 1.4.0
+**Last Updated**: 2025-11-10

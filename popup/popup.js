@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Event listeners
   document.getElementById('view-annotations-btn').addEventListener('click', viewAnnotations);
+  document.getElementById('export-docs-btn').addEventListener('click', exportDocumentation);
   document.getElementById('export-btn').addEventListener('click', exportAnnotations);
   document.getElementById('import-btn').addEventListener('click', () => {
     document.getElementById('import-file-input').click();
@@ -39,6 +40,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('import-file-input').addEventListener('change', importAnnotations);
   document.getElementById('clear-btn').addEventListener('click', clearAnnotations);
   document.getElementById('close-annotations-btn').addEventListener('click', closeAnnotationsModal);
+
+  // Color legend toggle
+  document.getElementById('color-legend-toggle').addEventListener('click', toggleColorLegend);
 
   // Close modal on background click
   document.getElementById('annotations-modal').addEventListener('click', (e) => {
@@ -380,4 +384,160 @@ async function clearAnnotations() {
     console.error('Error clearing annotations:', error);
     alert('Error clearing annotations. Please try again.');
   }
+}
+
+/**
+ * Toggle color legend visibility
+ */
+function toggleColorLegend() {
+  const content = document.getElementById('color-legend-content');
+  const icon = document.querySelector('.toggle-icon');
+
+  content.classList.toggle('expanded');
+  icon.classList.toggle('expanded');
+}
+
+/**
+ * Export flow documentation as Markdown
+ */
+async function exportDocumentation() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    // Check if on Power Automate
+    if (!tab.url.includes('powerautomate.com') && !tab.url.includes('flow.microsoft.com')) {
+      alert('Please navigate to a Power Automate flow to export documentation.');
+      return;
+    }
+
+    // Get annotations for current flow
+    const result = await chrome.storage.sync.get(['annotations']);
+    const allAnnotations = result.annotations || {};
+    const flowId = extractFlowId(tab.url);
+
+    // Try flow ID first, fallback to full URL for backwards compatibility
+    const flowAnnotations = allAnnotations[flowId] || allAnnotations[tab.url] || {};
+
+    if (Object.keys(flowAnnotations).length === 0) {
+      alert('No annotations found for this flow. Please add some annotations first.');
+      return;
+    }
+
+    // Generate Markdown documentation
+    const markdown = generateMarkdownDocumentation(flowId, tab.url, flowAnnotations);
+
+    // Create and download the file
+    const dataBlob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(dataBlob);
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+    const filename = `flow-documentation-${flowId.substring(0, 8)}-${timestamp}.md`;
+
+    await chrome.downloads.download({
+      url: url,
+      filename: filename,
+      saveAs: true
+    });
+
+    // Show success message
+    const btn = document.getElementById('export-docs-btn');
+    const originalText = btn.textContent;
+    btn.textContent = '✓ Exported!';
+    btn.style.background = '#44ff44';
+
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = '';
+    }, 2000);
+
+  } catch (error) {
+    console.error('Error exporting documentation:', error);
+    alert('Error exporting documentation. Please try again.');
+  }
+}
+
+/**
+ * Generate Markdown documentation from annotations
+ */
+function generateMarkdownDocumentation(flowId, flowUrl, annotations) {
+  const date = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  let markdown = `# Power Automate Flow Documentation\n\n`;
+  markdown += `**Generated:** ${date}\n\n`;
+  markdown += `**Flow ID:** \`${flowId}\`\n\n`;
+  markdown += `**Flow URL:** ${flowUrl}\n\n`;
+  markdown += `---\n\n`;
+
+  // Color legend
+  markdown += `## Color Guide\n\n`;
+  markdown += `| Color | Meaning |\n`;
+  markdown += `|-------|----------|\n`;
+  markdown += `| 🔴 Red | Critical/Errors |\n`;
+  markdown += `| 🟠 Orange | Needs Attention |\n`;
+  markdown += `| 🟡 Yellow | Warning |\n`;
+  markdown += `| 🟢 Green | Approved/Complete |\n`;
+  markdown += `| 🔵 Blue | Information |\n`;
+  markdown += `| 🟣 Purple | Dependencies |\n`;
+  markdown += `| 🩷 Pink | Review Required |\n\n`;
+  markdown += `---\n\n`;
+
+  // Group annotations by color
+  const colorGroups = {
+    'red': { name: 'Critical/Errors 🔴', items: [] },
+    'orange': { name: 'Needs Attention 🟠', items: [] },
+    'yellow': { name: 'Warning 🟡', items: [] },
+    'green': { name: 'Approved/Complete 🟢', items: [] },
+    'blue': { name: 'Information 🔵', items: [] },
+    'purple': { name: 'Dependencies 🟣', items: [] },
+    'pink': { name: 'Review Required 🩷', items: [] },
+    'none': { name: 'Other Notes 📝', items: [] }
+  };
+
+  // Organize annotations
+  Object.entries(annotations).forEach(([elementId, annotation]) => {
+    const color = annotation.color || 'none';
+    const group = colorGroups[color] || colorGroups['none'];
+    group.items.push({ elementId, annotation });
+  });
+
+  // Generate sections for each color group
+  Object.entries(colorGroups).forEach(([colorKey, group]) => {
+    if (group.items.length > 0) {
+      markdown += `## ${group.name}\n\n`;
+
+      group.items.forEach(({ elementId, annotation }) => {
+        // Format element name
+        let elementName = elementId;
+        if (elementId.length > 60) {
+          elementName = elementId.substring(0, 60) + '...';
+        }
+
+        markdown += `### 📌 ${elementName}\n\n`;
+
+        // Add comment
+        if (annotation.comment) {
+          markdown += `${annotation.comment}\n\n`;
+        }
+
+        // Add tags
+        if (annotation.tags && annotation.tags.length > 0) {
+          markdown += `**Tags:** ${annotation.tags.map(tag => `\`${tag}\``).join(', ')}\n\n`;
+        }
+
+        markdown += `---\n\n`;
+      });
+    }
+  });
+
+  // Footer
+  markdown += `\n## Notes\n\n`;
+  markdown += `This documentation was generated by **PWRFlow Notate** Chrome Extension.\n\n`;
+  markdown += `You can edit this file in any text editor (VS Code, Notepad++, etc.) or convert it to PDF using tools like Pandoc or online Markdown converters.\n\n`;
+  markdown += `**Total Annotations:** ${Object.keys(annotations).length}\n`;
+
+  return markdown;
 }
