@@ -691,7 +691,7 @@ function displaySearchResults(results, searchQuery) {
     // Click to open flow and highlight element
     resultItem.addEventListener('click', async () => {
       // Construct URL with element ID in hash for highlighting
-      const flowUrl = `https://make.powerautomate.com/manage/environments/Default-/flows/${flowId}/details#pwrflow-highlight=${encodeURIComponent(elementId)}`;
+      const flowUrl = `https://make.powerautomate.com/environments/Default-/flows/${flowId}/details#pwrflow-highlight=${encodeURIComponent(elementId)}`;
 
       // Open in new tab
       await chrome.tabs.create({ url: flowUrl });

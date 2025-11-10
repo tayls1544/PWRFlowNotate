@@ -76,12 +76,10 @@ class PWRFlowNotate {
         const match = hash.match(/pwrflow-highlight=([^&]+)/);
         if (match && match[1]) {
           const elementId = decodeURIComponent(match[1]);
-          console.log('[PWRFlowNotate] Highlighting element:', elementId);
+          console.log('[PWRFlowNotate] Detected highlight request for element:', elementId);
 
-          // Wait a bit for the page to fully render
-          setTimeout(() => {
-            this.highlightElement(elementId);
-          }, 1500);
+          // Wait for the page to fully render, then retry multiple times
+          this.highlightElementWithRetry(elementId, 0);
         }
       }
     } catch (error) {
@@ -90,55 +88,110 @@ class PWRFlowNotate {
   }
 
   /**
-   * Highlight a specific element with pulsing animation
+   * Highlight element with retry mechanism
    */
-  highlightElement(elementId) {
+  highlightElementWithRetry(elementId, attemptCount) {
+    const maxAttempts = 10;
+    const retryDelay = 500; // 500ms between attempts
+
+    console.log(`[PWRFlowNotate] Attempt ${attemptCount + 1}/${maxAttempts} to find element:`, elementId);
+
+    const element = this.findElement(elementId);
+
+    if (element) {
+      console.log('[PWRFlowNotate] Found element to highlight:', element);
+      this.applyHighlight(element);
+    } else if (attemptCount < maxAttempts - 1) {
+      console.log(`[PWRFlowNotate] Element not found yet, retrying in ${retryDelay}ms...`);
+      setTimeout(() => {
+        this.highlightElementWithRetry(elementId, attemptCount + 1);
+      }, retryDelay);
+    } else {
+      console.warn('[PWRFlowNotate] Could not find element after', maxAttempts, 'attempts:', elementId);
+      console.log('[PWRFlowNotate] Available elements with data-automation-id:');
+      const allElements = document.querySelectorAll('[data-automation-id]');
+      allElements.forEach(el => {
+        console.log('  -', el.getAttribute('data-automation-id'));
+      });
+    }
+  }
+
+  /**
+   * Find element using multiple strategies
+   */
+  findElement(elementId) {
+    // Strategy 1: Exact match on data-automation-id
+    let element = document.querySelector(`[data-automation-id="${elementId}"]`);
+    if (element) {
+      console.log('[PWRFlowNotate] Found via exact data-automation-id match');
+      return element;
+    }
+
+    // Strategy 2: Partial match on data-automation-id
+    const allElements = document.querySelectorAll('[data-automation-id]');
+    for (const el of allElements) {
+      const autoId = el.getAttribute('data-automation-id');
+      if (autoId && autoId.includes(elementId)) {
+        console.log('[PWRFlowNotate] Found via partial data-automation-id match:', autoId);
+        return el;
+      }
+    }
+
+    // Strategy 3: Look for annotated elements
+    element = document.querySelector(`.pwrflow-annotated[data-element-id="${elementId}"]`);
+    if (element) {
+      console.log('[PWRFlowNotate] Found via pwrflow-annotated class');
+      return element;
+    }
+
+    // Strategy 4: Look for element by ID
+    element = document.getElementById(elementId);
+    if (element) {
+      console.log('[PWRFlowNotate] Found via element ID');
+      return element;
+    }
+
+    // Strategy 5: Look in card containers (Power Automate specific)
+    const cards = document.querySelectorAll('[class*="card"]');
+    for (const card of cards) {
+      const cardId = card.getAttribute('data-automation-id') || card.id;
+      if (cardId && cardId.includes(elementId)) {
+        console.log('[PWRFlowNotate] Found via card class search:', cardId);
+        return card;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Apply highlight animation to element
+   */
+  applyHighlight(element) {
     try {
-      // Find the element - try multiple approaches
-      let element = document.querySelector(`[data-automation-id="${elementId}"]`);
+      // Scroll element into view
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-      // If not found by automation-id, try finding by partial match
-      if (!element) {
-        const allElements = document.querySelectorAll('[data-automation-id]');
-        for (const el of allElements) {
-          const autoId = el.getAttribute('data-automation-id');
-          if (autoId && autoId.includes(elementId)) {
-            element = el;
-            break;
-          }
+      // Add highlight class
+      element.classList.add('pwrflow-search-highlight');
+
+      console.log('[PWRFlowNotate] Applied highlight to element');
+
+      // Remove highlight after animation
+      setTimeout(() => {
+        element.classList.remove('pwrflow-search-highlight');
+        console.log('[PWRFlowNotate] Removed highlight from element');
+      }, 5000);
+
+      // Clear the hash from URL after highlighting
+      setTimeout(() => {
+        if (window.location.hash.includes('pwrflow-highlight=')) {
+          history.replaceState(null, null, window.location.pathname + window.location.search);
+          console.log('[PWRFlowNotate] Cleared highlight hash from URL');
         }
-      }
-
-      // Try finding the annotated element directly
-      if (!element) {
-        element = document.querySelector(`.pwrflow-annotated[data-element-id="${elementId}"]`);
-      }
-
-      if (element) {
-        console.log('[PWRFlowNotate] Found element to highlight:', element);
-
-        // Scroll element into view
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        // Add highlight class
-        element.classList.add('pwrflow-search-highlight');
-
-        // Remove highlight after animation
-        setTimeout(() => {
-          element.classList.remove('pwrflow-search-highlight');
-        }, 5000);
-
-        // Clear the hash from URL after highlighting
-        setTimeout(() => {
-          if (window.location.hash.includes('pwrflow-highlight=')) {
-            history.replaceState(null, null, window.location.pathname + window.location.search);
-          }
-        }, 1000);
-      } else {
-        console.warn('[PWRFlowNotate] Could not find element to highlight:', elementId);
-      }
+      }, 1000);
     } catch (error) {
-      console.error('[PWRFlowNotate] Error highlighting element:', error);
+      console.error('[PWRFlowNotate] Error applying highlight:', error);
     }
   }
 
