@@ -661,7 +661,7 @@ class PWRFlowNotate {
    */
   async loadAnnotations() {
     try {
-      const result = await chrome.storage.local.get(['annotations']);
+      const result = await chrome.storage.sync.get(['annotations']);
       const url = window.location.href;
       const flowId = extractFlowId(url);
       const allAnnotations = result.annotations || {};
@@ -684,7 +684,7 @@ class PWRFlowNotate {
     try {
       const url = window.location.href;
       const flowId = extractFlowId(url);
-      const result = await chrome.storage.local.get(['annotations']);
+      const result = await chrome.storage.sync.get(['annotations']);
       const allAnnotations = result.annotations || {};
 
       // Save using flow ID as key
@@ -696,7 +696,7 @@ class PWRFlowNotate {
         console.log('[PWRFlowNotate] Migrated from URL to Flow ID storage');
       }
 
-      await chrome.storage.local.set({ annotations: allAnnotations });
+      await chrome.storage.sync.set({ annotations: allAnnotations });
       console.log('[PWRFlowNotate] Saved annotations successfully for flow:', flowId);
     } catch (error) {
       console.error('[PWRFlowNotate] Error saving annotations:', error);

@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
  */
 async function loadStats() {
   try {
-    const result = await chrome.storage.local.get(['annotations']);
+    const result = await chrome.storage.sync.get(['annotations']);
     const allAnnotations = result.annotations || {};
 
     let totalAnnotations = 0;
@@ -95,7 +95,7 @@ async function checkPageStatus() {
  */
 async function exportAnnotations() {
   try {
-    const result = await chrome.storage.local.get(['annotations']);
+    const result = await chrome.storage.sync.get(['annotations']);
     const annotations = result.annotations || {};
 
     const dataStr = JSON.stringify(annotations, null, 2);
@@ -142,7 +142,7 @@ async function viewAnnotations() {
     }
 
     // Get annotations for current flow
-    const result = await chrome.storage.local.get(['annotations']);
+    const result = await chrome.storage.sync.get(['annotations']);
     const allAnnotations = result.annotations || {};
     const flowId = extractFlowId(tab.url);
 
@@ -291,7 +291,7 @@ async function importAnnotations(event) {
 
     if (merge) {
       // Merge: combine existing with imported
-      const result = await chrome.storage.local.get(['annotations']);
+      const result = await chrome.storage.sync.get(['annotations']);
       const existingAnnotations = result.annotations || {};
 
       // Merge annotations for each URL
@@ -312,7 +312,7 @@ async function importAnnotations(event) {
     }
 
     // Save the annotations
-    await chrome.storage.local.set({ annotations: finalAnnotations });
+    await chrome.storage.sync.set({ annotations: finalAnnotations });
 
     // Update stats
     await loadStats();
@@ -356,7 +356,7 @@ async function clearAnnotations() {
   if (!confirmed) return;
 
   try {
-    await chrome.storage.local.set({ annotations: {} });
+    await chrome.storage.sync.set({ annotations: {} });
 
     // Update stats
     document.getElementById('annotation-count').textContent = '0';
