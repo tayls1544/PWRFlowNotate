@@ -91,15 +91,15 @@ class PWRFlowNotate {
    * Highlight element with retry mechanism
    */
   highlightElementWithRetry(elementId, attemptCount) {
-    const maxAttempts = 10;
-    const retryDelay = 500; // 500ms between attempts
+    const maxAttempts = 20; // Increased from 10 to handle slow Power Automate loading
+    const retryDelay = 1000; // Increased to 1000ms (1 second) between attempts
 
     console.log(`[PWRFlowNotate] Attempt ${attemptCount + 1}/${maxAttempts} to find element:`, elementId);
 
     const element = this.findElement(elementId);
 
     if (element) {
-      console.log('[PWRFlowNotate] Found element to highlight:', element);
+      console.log('[PWRFlowNotate] ✓ Found element to highlight:', element);
       this.applyHighlight(element);
     } else if (attemptCount < maxAttempts - 1) {
       console.log(`[PWRFlowNotate] Element not found yet, retrying in ${retryDelay}ms...`);
@@ -107,11 +107,14 @@ class PWRFlowNotate {
         this.highlightElementWithRetry(elementId, attemptCount + 1);
       }, retryDelay);
     } else {
-      console.warn('[PWRFlowNotate] Could not find element after', maxAttempts, 'attempts:', elementId);
-      console.log('[PWRFlowNotate] Available elements with data-automation-id:');
+      console.warn('[PWRFlowNotate] ✗ Could not find element after', maxAttempts, 'attempts:', elementId);
+      console.log('[PWRFlowNotate] Available card elements with data-automation-id:');
       const allElements = document.querySelectorAll('[data-automation-id]');
       allElements.forEach(el => {
-        console.log('  -', el.getAttribute('data-automation-id'));
+        const id = el.getAttribute('data-automation-id');
+        if (id && id.includes('card')) {
+          console.log('  -', id);
+        }
       });
     }
   }
