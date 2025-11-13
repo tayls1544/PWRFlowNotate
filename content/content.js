@@ -32,44 +32,60 @@ function extractFlowId(url) {
 function isFlowDesignerPage() {
   const url = window.location.href;
 
-  // Must contain /flows/{flowId}/details or /flows/{flowId}/designer
-  const isFlowPage = url.includes('/flows/') &&
-                     (url.includes('/details') || url.includes('/designer'));
-
   // Should NOT be on these pages:
   const isListPage = url.includes('/manage/flows') || url.match(/\/flows\/?$/);
   const isRunHistoryPage = url.includes('/runs/') || url.includes('/runhistory');
 
-  if (!isFlowPage || isListPage || isRunHistoryPage) {
+  if (isListPage || isRunHistoryPage) {
+    console.log('[PWRFlowNotate] On list or run history page - skipping');
     return false;
   }
 
-  // Since settings and designer use the same URL, check DOM elements
-  // Look for elements that ONLY exist in the designer view
-  const hasFlowActions = document.querySelectorAll('[data-automation-id*="card-"]').length > 0;
-  const hasDesignerCanvas = document.querySelector('[data-automation-id="flow-canvas"]') !== null;
+  // Must contain /flows/{flowId}
+  const hasFlowId = url.match(/\/flows\/[a-f0-9-]+/i);
+  if (!hasFlowId) {
+    console.log('[PWRFlowNotate] No flow ID in URL - skipping');
+    return false;
+  }
 
-  // Settings panel elements (these appear on settings page, not designer)
-  const hasEditButton = document.querySelector('[aria-label*="Edit"]') !== null;
-  const hasSaveButton = document.querySelector('[aria-label*="Save"]') !== null;
-  const hasPropertiesForm = document.querySelector('form') !== null &&
-                            (document.querySelector('[placeholder*="name"]') !== null ||
-                             document.querySelector('[placeholder*="description"]') !== null);
+  // Look for POSITIVE indicators of settings page
+  // Settings page has a properties panel with specific elements
+  const hasPropertiesPanel = document.querySelector('[class*="properties-panel"]') !== null ||
+                             document.querySelector('[class*="propertiesPanel"]') !== null ||
+                             document.querySelector('[class*="PropertiesPanel"]') !== null;
 
-  // On designer: has actions/canvas, no properties form
-  // On settings: has form with edit/save buttons
-  const isDesigner = (hasFlowActions || hasDesignerCanvas) && !hasPropertiesForm;
+  const hasFlowPropertiesForm = document.querySelector('form') !== null &&
+                                (document.querySelector('input[placeholder*="name" i]') !== null ||
+                                 document.querySelector('input[placeholder*="description" i]') !== null ||
+                                 document.querySelector('textarea[placeholder*="description" i]') !== null);
 
-  console.log('[PWRFlowNotate] Page check:', {
-    url: url,
-    hasFlowActions,
-    hasDesignerCanvas,
-    hasPropertiesForm,
-    isDesigner,
-    shouldActivate: isDesigner
-  });
+  const hasEditDetailsButton = Array.from(document.querySelectorAll('button')).some(btn =>
+    btn.textContent?.toLowerCase().includes('edit details') ||
+    btn.textContent?.toLowerCase().includes('edit properties')
+  );
 
-  return isDesigner;
+  const hasShareButton = Array.from(document.querySelectorAll('button')).some(btn =>
+    btn.textContent?.toLowerCase() === 'share'
+  );
+
+  const hasExportButton = Array.from(document.querySelectorAll('button')).some(btn =>
+    btn.textContent?.toLowerCase() === 'export'
+  );
+
+  // If we find clear settings page indicators, it's NOT the designer
+  const isSettingsPage = hasPropertiesPanel ||
+                         hasFlowPropertiesForm ||
+                         (hasEditDetailsButton && hasShareButton && hasExportButton);
+
+  if (isSettingsPage) {
+    console.log('[PWRFlowNotate] Detected settings/properties page - skipping');
+    return false;
+  }
+
+  // If not settings page and has flow ID, assume it's designer
+  // Even if elements haven't loaded yet, we'll proceed and let the retry mechanism handle it
+  console.log('[PWRFlowNotate] Detected flow designer page (or page still loading)');
+  return true;
 }
 
 class PWRFlowNotate {
@@ -272,25 +288,27 @@ class PWRFlowNotate {
   async waitForFlowDesigner() {
     return new Promise((resolve) => {
       const checkInterval = setInterval(() => {
-        // Look for Power Automate flow canvas elements
+        // Look for Power Automate flow canvas elements or any card elements
         const flowCanvas = document.querySelector('[data-automation-id="flow-canvas"]') ||
                           document.querySelector('.designer-canvas') ||
                           document.querySelector('[class*="designer"]') ||
                           document.querySelector('[class*="flow-canvas"]');
 
-        if (flowCanvas) {
+        const hasCards = document.querySelectorAll('[data-automation-id*="card-"]').length > 0;
+
+        if (flowCanvas || hasCards) {
           clearInterval(checkInterval);
           console.log('[PWRFlowNotate] Flow designer detected');
           resolve();
         }
       }, 500);
 
-      // Timeout after 30 seconds
+      // Timeout after 60 seconds (Power Automate can be very slow)
       setTimeout(() => {
         clearInterval(checkInterval);
-        console.log('[PWRFlowNotate] Flow designer detection timeout - proceeding anyway');
+        console.log('[PWRFlowNotate] Flow designer detection timeout - proceeding with initialization');
         resolve();
-      }, 30000);
+      }, 60000);
     });
   }
 
