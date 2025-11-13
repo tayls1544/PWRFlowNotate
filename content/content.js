@@ -890,8 +890,13 @@ class PWRFlowNotate {
       // Try flow ID first, fallback to URL for backwards compatibility
       this.annotations = allAnnotations[flowId] || allAnnotations[url] || {};
 
-      console.log('[PWRFlowNotate] Flow ID:', flowId);
-      console.log('[PWRFlowNotate] Loaded annotations:', Object.keys(this.annotations).length);
+      console.log('[PWRFlowNotate] ===== LOAD ANNOTATIONS =====');
+      console.log('[PWRFlowNotate] Current URL:', url);
+      console.log('[PWRFlowNotate] Extracted Flow ID:', flowId);
+      console.log('[PWRFlowNotate] All stored flow IDs:', Object.keys(allAnnotations));
+      console.log('[PWRFlowNotate] Loaded annotations for this flow:', Object.keys(this.annotations).length);
+      console.log('[PWRFlowNotate] Annotation details:', this.annotations);
+      console.log('[PWRFlowNotate] ==============================');
     } catch (error) {
       console.error('[PWRFlowNotate] Error loading annotations:', error);
       this.annotations = {};
@@ -908,6 +913,12 @@ class PWRFlowNotate {
       const result = await chrome.storage.sync.get(['annotations']);
       const allAnnotations = result.annotations || {};
 
+      console.log('[PWRFlowNotate] ===== SAVE ANNOTATIONS =====');
+      console.log('[PWRFlowNotate] Current URL:', url);
+      console.log('[PWRFlowNotate] Extracted Flow ID:', flowId);
+      console.log('[PWRFlowNotate] Annotations to save:', this.annotations);
+      console.log('[PWRFlowNotate] Number of annotations:', Object.keys(this.annotations).length);
+
       // Save using flow ID as key
       allAnnotations[flowId] = this.annotations;
 
@@ -918,9 +929,13 @@ class PWRFlowNotate {
       }
 
       await chrome.storage.sync.set({ annotations: allAnnotations });
-      console.log('[PWRFlowNotate] Saved annotations successfully for flow:', flowId);
+
+      console.log('[PWRFlowNotate] ✓ Saved successfully!');
+      console.log('[PWRFlowNotate] All flow IDs in storage:', Object.keys(allAnnotations));
+      console.log('[PWRFlowNotate] ==============================');
     } catch (error) {
-      console.error('[PWRFlowNotate] Error saving annotations:', error);
+      console.error('[PWRFlowNotate] ✗ Error saving annotations:', error);
+      console.error('[PWRFlowNotate] Error details:', error.message, error.stack);
       // Show user-friendly error
       alert('Failed to save annotation. Please check browser console for details.');
     }
