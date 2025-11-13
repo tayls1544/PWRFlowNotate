@@ -91,16 +91,18 @@ class PWRFlowNotate {
 
     // Basic URL check first (quick exit for obviously wrong pages)
     const url = window.location.href;
-    const isFlowPage = url.includes('/flows/') && (url.includes('/details') || url.includes('/designer'));
+
+    // Check if URL has a flow ID pattern: /flows/{uuid}
+    const hasFlowId = url.match(/\/flows\/[a-f0-9-]+/i);
     const isListPage = url.includes('/manage/flows') || url.match(/\/flows\/?$/);
     const isRunHistoryPage = url.includes('/runs/') || url.includes('/runhistory');
 
-    if (!isFlowPage || isListPage || isRunHistoryPage) {
+    if (!hasFlowId || isListPage || isRunHistoryPage) {
       console.log('[PWRFlowNotate] Not on a flow page, skipping initialization');
       return;
     }
 
-    console.log('[PWRFlowNotate] Waiting for flow designer to load...');
+    console.log('[PWRFlowNotate] Detected flow page, waiting for designer to load...');
 
     // Wait for Power Automate UI to load
     await this.waitForFlowDesigner();
