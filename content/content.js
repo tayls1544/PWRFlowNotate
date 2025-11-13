@@ -96,7 +96,7 @@ class PWRFlowNotate {
     this.activeModal = null;
     this.isUpdating = false;  // Prevent infinite loops
     this.updateTimeout = null;  // Debounce updates
-    this.loadAnnotations();
+    // Don't load annotations in constructor - wait until init() confirms we're on a flow page
   }
 
   /**
