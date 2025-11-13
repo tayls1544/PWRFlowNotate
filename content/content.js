@@ -39,20 +39,37 @@ function isFlowDesignerPage() {
   // Should NOT be on these pages:
   const isListPage = url.includes('/manage/flows') || url.match(/\/flows\/?$/);
   const isRunHistoryPage = url.includes('/runs/') || url.includes('/runhistory');
-  const isSettingsPage = url.includes('/settings') || url.includes('/properties');
 
-  const shouldActivate = isFlowPage && !isListPage && !isRunHistoryPage && !isSettingsPage;
+  if (!isFlowPage || isListPage || isRunHistoryPage) {
+    return false;
+  }
+
+  // Since settings and designer use the same URL, check DOM elements
+  // Look for elements that ONLY exist in the designer view
+  const hasFlowActions = document.querySelectorAll('[data-automation-id*="card-"]').length > 0;
+  const hasDesignerCanvas = document.querySelector('[data-automation-id="flow-canvas"]') !== null;
+
+  // Settings panel elements (these appear on settings page, not designer)
+  const hasEditButton = document.querySelector('[aria-label*="Edit"]') !== null;
+  const hasSaveButton = document.querySelector('[aria-label*="Save"]') !== null;
+  const hasPropertiesForm = document.querySelector('form') !== null &&
+                            (document.querySelector('[placeholder*="name"]') !== null ||
+                             document.querySelector('[placeholder*="description"]') !== null);
+
+  // On designer: has actions/canvas, no properties form
+  // On settings: has form with edit/save buttons
+  const isDesigner = (hasFlowActions || hasDesignerCanvas) && !hasPropertiesForm;
 
   console.log('[PWRFlowNotate] Page check:', {
     url: url,
-    isFlowPage,
-    isListPage,
-    isRunHistoryPage,
-    isSettingsPage,
-    shouldActivate
+    hasFlowActions,
+    hasDesignerCanvas,
+    hasPropertiesForm,
+    isDesigner,
+    shouldActivate: isDesigner
   });
 
-  return shouldActivate;
+  return isDesigner;
 }
 
 class PWRFlowNotate {
