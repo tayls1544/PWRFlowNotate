@@ -89,16 +89,29 @@ class PWRFlowNotate {
   async init() {
     if (this.initialized) return;
 
-    // Check if we're on the flow designer page
-    if (!isFlowDesignerPage()) {
-      console.log('[PWRFlowNotate] Not on flow designer page, skipping initialization');
+    // Basic URL check first (quick exit for obviously wrong pages)
+    const url = window.location.href;
+    const isFlowPage = url.includes('/flows/') && (url.includes('/details') || url.includes('/designer'));
+    const isListPage = url.includes('/manage/flows') || url.match(/\/flows\/?$/);
+    const isRunHistoryPage = url.includes('/runs/') || url.includes('/runhistory');
+
+    if (!isFlowPage || isListPage || isRunHistoryPage) {
+      console.log('[PWRFlowNotate] Not on a flow page, skipping initialization');
       return;
     }
 
-    console.log('[PWRFlowNotate] Initializing on flow designer page...');
+    console.log('[PWRFlowNotate] Waiting for flow designer to load...');
 
     // Wait for Power Automate UI to load
     await this.waitForFlowDesigner();
+
+    // Now check if we're actually on the designer (not settings)
+    if (!isFlowDesignerPage()) {
+      console.log('[PWRFlowNotate] On settings/properties page, not designer - skipping initialization');
+      return;
+    }
+
+    console.log('[PWRFlowNotate] Flow designer detected, initializing annotation system...');
 
     // Load saved annotations
     await this.loadAnnotations();
