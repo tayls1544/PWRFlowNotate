@@ -25,6 +25,36 @@ function extractFlowId(url) {
   }
 }
 
+/**
+ * Check if current page is a flow designer/editor page
+ * @returns {boolean} - True if on flow designer page
+ */
+function isFlowDesignerPage() {
+  const url = window.location.href;
+
+  // Must contain /flows/{flowId}/details or /flows/{flowId}/designer
+  const isFlowPage = url.includes('/flows/') &&
+                     (url.includes('/details') || url.includes('/designer'));
+
+  // Should NOT be on these pages:
+  const isListPage = url.includes('/manage/flows') || url.match(/\/flows\/?$/);
+  const isRunHistoryPage = url.includes('/runs/') || url.includes('/runhistory');
+  const isSettingsPage = url.includes('/settings') || url.includes('/properties');
+
+  const shouldActivate = isFlowPage && !isListPage && !isRunHistoryPage && !isSettingsPage;
+
+  console.log('[PWRFlowNotate] Page check:', {
+    url: url,
+    isFlowPage,
+    isListPage,
+    isRunHistoryPage,
+    isSettingsPage,
+    shouldActivate
+  });
+
+  return shouldActivate;
+}
+
 class PWRFlowNotate {
   constructor() {
     this.annotations = {};
@@ -42,7 +72,13 @@ class PWRFlowNotate {
   async init() {
     if (this.initialized) return;
 
-    console.log('[PWRFlowNotate] Initializing...');
+    // Check if we're on the flow designer page
+    if (!isFlowDesignerPage()) {
+      console.log('[PWRFlowNotate] Not on flow designer page, skipping initialization');
+      return;
+    }
+
+    console.log('[PWRFlowNotate] Initializing on flow designer page...');
 
     // Wait for Power Automate UI to load
     await this.waitForFlowDesigner();
