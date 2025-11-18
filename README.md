@@ -380,7 +380,7 @@ MIT License - see [LICENSE](LICENSE) file for details
 ## 📞 Support
 
 - **Issues**: [GitHub Issues](https://github.com/yourusername/PWRFlowNotate/issues)
-- **Email**: your.email@example.com
+- **Email**: taylorvocalmusicuk@gmail.com
 - **Documentation**: [Wiki](https://github.com/yourusername/PWRFlowNotate/wiki)
 
 ## 🔒 Privacy
